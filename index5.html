@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniAbuja Security Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ═══════════════════════════════════════
+   RESET & VARIABLES
+═══════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --blue-900:#0a2847;--blue-800:#0d3a6e;--blue-700:#0f4d91;
+  --blue-600:#1a6fc4;--blue-500:#2d8de0;--blue-300:#7ec0f5;
+  --green-500:#22c55e;--green-100:#dcfce7;--green-700:#15803d;
+  --yellow-100:#fef3c7;--yellow-800:#92400e;
+  --red-500:#ef4444;--red-100:#fee2e2;--red-800:#991b1b;
+  --slate-900:#0f172a;--slate-800:#1e293b;--slate-600:#475569;
+  --slate-400:#94a3b8;--slate-200:#e2e8f0;--white:#ffffff;
+  --glass-border:rgba(255,255,255,0.12);
+  --radius-sm:8px;--radius-lg:20px;--radius-xl:28px;
+  --shadow-card:0 2px 24px rgba(0,0,0,0.18),0 1px 4px rgba(0,0,0,0.12);
+  --shadow-glow:0 0 40px rgba(26,111,196,0.25);
+  --font:'Inter',-apple-system,sans-serif;
+  --mono:'JetBrains Mono','Fira Mono',monospace;
+  --transition:240ms cubic-bezier(0.4,0,0.2,1);
+}
+html{font-size:16px;-webkit-font-smoothing:antialiased;}
+body{font-family:var(--font);background:var(--slate-900);color:var(--white);min-height:100vh;line-height:1.5;}
+
+/* ═══════════════════════════════════════
+   PAGE SWITCHING — only .page-active shows
+═══════════════════════════════════════ */
+.page{display:none;min-height:100vh;}
+.page-active{display:block;}
+
+/* ═══════════════════════════════════════
+   ██  PAGE 1 — LOGIN
+═══════════════════════════════════════ */
+#page-login{
+  display:none;align-items:center;justify-content:center;
+  padding:24px 16px;position:relative;
+}
+#page-login.page-active{display:flex;}
+
+.login-bg{position:fixed;inset:0;background:linear-gradient(135deg,var(--blue-900) 0%,var(--slate-900) 60%,#0d1f3a 100%);overflow:hidden;z-index:0;}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(26,111,196,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(26,111,196,0.07) 1px,transparent 1px);background-size:48px 48px;}
+.login-glow{position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:700px;height:700px;border-radius:50%;background:radial-gradient(ellipse,rgba(26,111,196,0.18) 0%,transparent 70%);pointer-events:none;}
+
+.login-card{
+  position:relative;z-index:1;width:100%;max-width:440px;
+  border-radius:var(--radius-xl);padding:40px 36px;
+  background:rgba(15,23,42,0.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border);box-shadow:var(--shadow-card),var(--shadow-glow);
+  animation:slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(28px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.login-logo{display:flex;align-items:center;gap:16px;margin-bottom:28px;}
+.logo-shield{width:44px;height:44px;flex-shrink:0;}
+.logo-shield svg{width:100%;height:100%;}
+.logo-main{font-size:1.25rem;font-weight:700;letter-spacing:-0.02em;color:var(--white);}
+.logo-sub{font-size:0.72rem;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--blue-300);opacity:0.85;}
+.login-divider{height:1px;background:linear-gradient(90deg,transparent,var(--glass-border),transparent);margin-bottom:22px;}
+.login-instructions{font-size:0.82rem;color:var(--slate-400);margin-bottom:28px;line-height:1.55;}
+
+.field-group{margin-bottom:18px;}
+.field-label{display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--slate-400);margin-bottom:8px;}
+.field-wrap{position:relative;display:flex;align-items:center;}
+.field-icon{position:absolute;left:14px;display:flex;align-items:center;color:var(--slate-400);width:18px;pointer-events:none;}
+.field-icon svg{width:100%;height:auto;}
+.field-input{
+  width:100%;padding:13px 14px 13px 42px;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--radius-sm);color:var(--white);font-family:var(--font);font-size:0.95rem;
+  transition:border-color var(--transition),background var(--transition),box-shadow var(--transition);outline:none;
+}
+.field-input::placeholder{color:var(--slate-600);}
+.field-input:focus{border-color:var(--blue-600);background:rgba(26,111,196,0.08);box-shadow:0 0 0 3px rgba(26,111,196,0.18);}
+.toggle-pw{position:absolute;right:12px;background:none;border:none;cursor:pointer;color:var(--slate-400);display:flex;align-items:center;padding:4px;}
+.toggle-pw svg{width:18px;height:18px;}
+
+.login-error{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);
+  border-radius:var(--radius-sm);padding:12px 14px;
+  color:#fca5a5;font-size:0.84rem;margin-bottom:18px;
+}
+.login-error svg{width:18px;height:18px;flex-shrink:0;color:var(--red-500);}
+.login-error.hidden{display:none;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.shake{animation:shake 0.4s ease;}
+
+/*
+  ★ LOGIN → PROFILE LINK BUTTON ★
+  This <a> connects Page 1 to Page 2.
+  JS validates fields first, then triggers the href navigation.
+*/
+.btn-login-go{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:14px 20px;
+  background:linear-gradient(135deg,var(--blue-600),var(--blue-700));
+  border:none;border-radius:var(--radius-sm);
+  color:var(--white);font-family:var(--font);font-size:0.95rem;font-weight:600;
+  cursor:pointer;transition:all var(--transition);
+  box-shadow:0 4px 16px rgba(26,111,196,0.4);
+  text-decoration:none;
+}
+.btn-login-go svg{width:18px;height:18px;}
+.btn-login-go:hover{background:linear-gradient(135deg,var(--blue-500),var(--blue-600));box-shadow:0 6px 24px rgba(26,111,196,0.55);transform:translateY(-1px);}
+.btn-login-go:active{transform:translateY(0);}
+
+.login-footer{text-align:center;margin-top:22px;font-size:0.72rem;color:var(--slate-600);letter-spacing:0.03em;}
+
+/* ═══════════════════════════════════════
+   SHARED TOPBAR (Profile + Report pages)
+═══════════════════════════════════════ */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 24px;
+  background:rgba(10,22,42,0.92);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.topbar-left,.topbar-right{display:flex;align-items:center;gap:10px;}
+.topbar-logo{display:flex;align-items:center;gap:10px;font-size:0.9rem;font-weight:500;color:var(--white);text-decoration:none;cursor:pointer;}
+.topbar-logo strong{font-weight:700;}
+.topbar-title{font-size:0.85rem;font-weight:600;color:var(--white);}
+.officer-pill{display:flex;align-items:center;gap:7px;font-size:0.8rem;color:var(--slate-400);}
+.officer-dot{width:7px;height:7px;border-radius:50%;background:var(--green-500);box-shadow:0 0 6px var(--green-500);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* Link-styled nav buttons (all hrefs) */
+.btn-ghost{
+  display:flex;align-items:center;gap:7px;padding:9px 16px;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--radius-sm);color:var(--slate-200);
+  font-family:var(--font);font-size:0.85rem;font-weight:500;
+  text-decoration:none;cursor:pointer;transition:all var(--transition);
+  background-color:rgba(255,255,255,0.06);
+}
+.btn-ghost svg{width:16px;height:16px;flex-shrink:0;}
+.btn-ghost:hover{background:rgba(255,255,255,0.11);border-color:rgba(255,255,255,0.2);}
+.btn-ghost.danger{color:#fca5a5;}
+.btn-ghost.danger:hover{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);}
+
+/* Breadcrumb */
+.breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:24px;font-size:0.8rem;color:var(--slate-600);}
+.bc-link{color:var(--blue-300);text-decoration:none;font-size:0.8rem;cursor:pointer;}
+.bc-link:hover{text-decoration:underline;}
+.bc-active{color:var(--slate-400);}
+
+/* ═══════════════════════════════════════
+   ██  PAGE 2 — PROFILE
+═══════════════════════════════════════ */
+.profile-main{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
+.profile-grid{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start;}
+
+.card{background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-card);animation:fadeIn 0.4s ease both;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.profile-left>.card+.card,.profile-right>.card+.card{margin-top:16px;}
+.card-label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate-400);margin-bottom:18px;}
+.card-eyebrow{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate-400);}
+
+.identity-card{padding:22px;}
+.id-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.search-ts{font-size:0.68rem;font-family:var(--mono);color:var(--slate-600);}
+.id-card-body{display:flex;gap:18px;align-items:flex-start;}
+.avatar-wrap{position:relative;flex-shrink:0;}
+.avatar-inner{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.35rem;font-weight:700;color:var(--white);position:relative;z-index:1;}
+.avatar-ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);pointer-events:none;}
+.student-name{font-size:1.1rem;font-weight:700;line-height:1.25;color:var(--white);margin-bottom:6px;}
+.matric-chip{display:inline-block;font-family:var(--mono);font-size:0.72rem;font-weight:500;background:rgba(26,111,196,0.18);border:1px solid rgba(26,111,196,0.3);color:var(--blue-300);border-radius:20px;padding:3px 12px;margin-bottom:10px;}
+.id-meta{display:flex;flex-direction:column;gap:6px;}
+.id-meta-row{display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--slate-400);}
+.id-meta-row svg{color:var(--slate-600);flex-shrink:0;}
+
+.detail-rows{display:flex;flex-direction:column;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;}
+.detail-row:last-child{border-bottom:none;}
+.detail-label{color:var(--slate-400);flex-shrink:0;margin-right:12px;}
+.detail-value{color:var(--white);font-weight:500;text-align:right;}
+
+/*
+  ★ PROFILE → REPORT LINK BUTTON ★
+  This <a href="#report"> connects Page 2 to Page 3.
+*/
+.action-link{
+  width:100%;display:flex;align-items:center;gap:14px;
+  padding:14px 16px;
+  background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);
+  border-radius:var(--radius-sm);
+  text-decoration:none;color:var(--white);
+  transition:all var(--transition);cursor:pointer;
+}
+.action-link:hover{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.4);}
+.action-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(239,68,68,0.15);color:var(--red-500);}
+.action-icon svg{width:18px;height:18px;}
+.action-text{flex:1;}
+.action-title{display:block;font-size:0.88rem;font-weight:600;}
+.action-sub{display:block;font-size:0.75rem;color:var(--slate-400);margin-top:2px;}
+.action-arrow{width:16px;height:16px;color:var(--slate-600);flex-shrink:0;}
+
+.threat-card{transition:border-color var(--transition);}
+.threat-green{border-color:rgba(34,197,94,0.25);}
+.threat-yellow{border-color:rgba(245,158,11,0.25);}
+.threat-red{border-color:rgba(239,68,68,0.3);}
+.threat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.threat-badge{font-size:0.7rem;font-weight:800;letter-spacing:0.1em;padding:5px 14px;border-radius:20px;}
+.badge-green{background:var(--green-100);color:var(--green-700);}
+.badge-yellow{background:var(--yellow-100);color:var(--yellow-800);}
+.badge-red{background:var(--red-100);color:var(--red-800);}
+.threat-bar-track{height:8px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;margin-bottom:8px;}
+.threat-bar-fill{height:100%;border-radius:100px;transition:width 1s cubic-bezier(0.4,0,0.2,1);box-shadow:0 0 12px currentColor;}
+.threat-bar-labels{display:flex;justify-content:space-between;font-size:0.68rem;color:var(--slate-600);margin-top:6px;margin-bottom:18px;}
+.threat-summary{font-size:0.84rem;color:var(--slate-300);line-height:1.6;}
+
+.history-list{display:flex;flex-direction:column;gap:14px;}
+.history-item{padding:14px 16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);border-left:3px solid var(--blue-600);}
+.history-date{font-size:0.72rem;font-family:var(--mono);color:var(--blue-300);margin-bottom:6px;}
+.history-event{font-size:0.85rem;color:var(--white);line-height:1.5;}
+.history-officer{font-size:0.72rem;color:var(--slate-600);margin-top:6px;}
+.no-history{font-size:0.84rem;color:var(--slate-600);text-align:center;padding:24px 0;}
+
+/* ═══════════════════════════════════════
+   ██  PAGE 3 — INCIDENT REPORT
+═══════════════════════════════════════ */
+.report-main{max-width:760px;margin:0 auto;padding:32px 20px 60px;}
+.report-card{background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);overflow:hidden;animation:fadeIn 0.4s ease both;}
+.report-header{display:flex;align-items:center;gap:18px;padding:28px 28px 22px;background:linear-gradient(135deg,var(--blue-800),var(--blue-900));border-bottom:1px solid rgba(255,255,255,0.08);}
+.report-icon{width:52px;height:52px;border-radius:14px;flex-shrink:0;background:rgba(239,68,68,0.25);display:flex;align-items:center;justify-content:center;}
+.report-icon svg{width:28px;height:28px;}
+.report-heading{font-size:1.15rem;font-weight:700;color:var(--white);}
+.report-sub{font-size:0.78rem;color:var(--blue-300);margin-top:3px;}
+.student-badge{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.badge-name{font-size:0.82rem;font-weight:600;color:var(--white);}
+.badge-matric{font-family:var(--mono);font-size:0.7rem;background:rgba(26,111,196,0.25);border:1px solid rgba(26,111,196,0.35);color:var(--blue-300);border-radius:20px;padding:2px 10px;}
+
+.report-form{padding:28px;}
+.form-row{margin-bottom:20px;}
+.form-row.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-group{display:flex;flex-direction:column;gap:7px;}
+.form-label{font-size:0.74rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--slate-400);}
+.form-input{
+  padding:12px 14px;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--radius-sm);color:var(--white);font-family:var(--font);font-size:0.9rem;
+  outline:none;transition:all var(--transition);
+}
+.form-input::placeholder{color:var(--slate-600);}
+.form-input:focus{border-color:var(--blue-600);background:rgba(26,111,196,0.08);box-shadow:0 0 0 3px rgba(26,111,196,0.18);}
+.form-input.readonly{background:rgba(255,255,255,0.03);color:var(--slate-400);cursor:not-allowed;}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:36px;}
+.form-select option{background:var(--slate-800);color:var(--white);}
+.form-textarea{resize:vertical;min-height:110px;}
+.threat-radio-group{display:flex;gap:12px;flex-wrap:wrap;}
+.threat-radio{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);font-size:0.88rem;font-weight:500;transition:all var(--transition);}
+.threat-radio input[type="radio"]{display:none;}
+.threat-radio:has(input:checked){border-color:var(--blue-600);background:rgba(26,111,196,0.12);}
+.report-success{display:flex;align-items:center;gap:12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:var(--radius-sm);padding:14px 16px;color:#86efac;font-size:0.85rem;margin-bottom:20px;}
+.report-success svg{width:20px;height:20px;flex-shrink:0;}
+.report-success.hidden{display:none;}
+.form-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:8px;align-items:center;}
+
+/*
+  ★ REPORT → PROFILE CANCEL/BACK LINK ★
+  These <a> elements connect Page 3 back to Page 2.
+*/
+.btn-cancel{
+  display:flex;align-items:center;gap:7px;padding:9px 16px;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--radius-sm);color:var(--slate-200);
+  font-family:var(--font);font-size:0.85rem;font-weight:500;
+  text-decoration:none;cursor:pointer;transition:all var(--transition);
+}
+.btn-cancel:hover{background:rgba(255,255,255,0.11);border-color:rgba(255,255,255,0.2);}
+.btn-submit{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:14px 24px;
+  background:linear-gradient(135deg,var(--blue-600),var(--blue-700));
+  border:none;border-radius:var(--radius-sm);
+  color:var(--white);font-family:var(--font);font-size:0.95rem;font-weight:600;
+  cursor:pointer;transition:all var(--transition);
+  box-shadow:0 4px 16px rgba(26,111,196,0.4);
+}
+.btn-submit svg{width:18px;height:18px;}
+.btn-submit:hover{background:linear-gradient(135deg,var(--blue-500),var(--blue-600));box-shadow:0 6px 24px rgba(26,111,196,0.55);transform:translateY(-1px);}
+.btn-submit:active{transform:translateY(0);}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:880px){.profile-grid{grid-template-columns:1fr;}}
+@media(max-width:600px){
+  .topbar{padding:10px 14px;}
+  .officer-pill{display:none;}
+  .profile-main{padding:18px 12px 48px;}
+  .topbar-right{gap:6px;}
+  .report-main{padding:18px 12px 48px;}
+  .form-row.two-col{grid-template-columns:1fr;}
+  .report-form{padding:20px 16px;}
+  .report-header{padding:20px 18px 18px;flex-direction:column;align-items:flex-start;gap:12px;}
+  .student-badge{align-items:flex-start;margin-left:0;}
+  .threat-radio-group{flex-direction:column;}
+  .login-card{padding:28px 20px;}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE 1 — LOGIN
+     Connects to: Page 2 (Profile) via #login-btn
+════════════════════════════════════════════════════════ -->
+<div id="page-login" class="page page-active">
+  <div class="login-bg">
+    <div class="login-grid"></div>
+    <div class="login-glow"></div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-shield">
+        <svg viewBox="0 0 40 44" fill="none">
+          <path d="M20 2L4 8V22C4 31.4 11 40.2 20 42C29 40.2 36 31.4 36 22V8L20 2Z" fill="url(#sg)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <path d="M14 22L18 26L26 18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="sg" x1="4" y1="2" x2="36" y2="42" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#1a6fc4"/><stop offset="100%" stop-color="#0d4a8c"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div>
+        <span class="logo-main">UniAbuja</span>
+        <span class="logo-sub" style="display:block;">Security Management Portal</span>
+      </div>
+    </div>
+
+    <div class="login-divider"></div>
+    <p class="login-instructions">Authorized security personnel only. Enter a student matric number and your officer password to retrieve a student profile.</p>
+
+    <div class="field-group">
+      <label class="field-label" for="matricInput">Matric Number</label>
+      <div class="field-wrap">
+        <span class="field-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 4V3M13 4V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M3 8h14" stroke="currentColor" stroke-width="1.5"/></svg></span>
+        <input type="text" id="matricInput" class="field-input" placeholder="e.g. 20/52RA015/CSC" autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="passwordInput">Officer Password</label>
+      <div class="field-wrap">
+        <span class="field-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="4" y="9" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 9V6.5a3 3 0 016 0V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        <input type="password" id="passwordInput" class="field-input" placeholder="Officer access password" />
+        <button class="toggle-pw" id="togglePw" type="button" aria-label="Toggle password visibility">
+          <svg viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="10" rx="7" ry="4.5" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="loginError" class="login-error hidden">
+      <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v5M10 14v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span id="loginErrorMsg">Invalid credentials.</span>
+    </div>
+
+    <!--
+      ★ href LINK: LOGIN → PROFILE ★
+      This <a> tag is the bridge from Page 1 to Page 2.
+      The href="#profile" is intercepted by JS which validates
+      the form first. If valid, it shows Page 2 and hides Page 1.
+      If invalid, it shows an error and blocks navigation.
+    -->
+    <a href="#profile" id="loginBtn" class="btn-login-go">
+      <span>Search Student</span>
+      <svg viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </a>
+
+    <p class="login-footer">University of Abuja &nbsp;·&nbsp; Security Operations &nbsp;·&nbsp; Restricted Access</p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE 2 — STUDENT PROFILE
+     Connects to: Page 1 (Login) via logo / New Search / Logout
+     Connects to: Page 3 (Report) via "Create Security Report"
+════════════════════════════════════════════════════════ -->
+<div id="page-profile" class="page">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <!--
+        ★ href LINK: PROFILE → LOGIN (logo) ★
+      -->
+      <a href="#login" class="topbar-logo nav-link">
+        <svg viewBox="0 0 28 32" fill="none" width="26" height="26">
+          <path d="M14 1L2 5.5V16.5C2 23.5 7.5 29.8 14 31.5C20.5 29.8 26 23.5 26 16.5V5.5L14 1Z" fill="url(#tg)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <path d="M9 16.5L12.5 20L19 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="tg" x1="2" y1="1" x2="26" y2="31" gradientUnits="userSpaceOnUse"><stop stop-color="#1a6fc4"/><stop offset="1" stop-color="#0a3d73"/></linearGradient></defs>
+        </svg>
+        <span>UniAbuja <strong>Security</strong></span>
+      </a>
+    </div>
+    <div class="topbar-right">
+      <div class="officer-pill"><div class="officer-dot"></div><span>Officer on duty</span></div>
+      <!--
+        ★ href LINK: PROFILE → LOGIN (New Search) ★
+      -->
+      <a href="#login" class="btn-ghost nav-link">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>New Search</span>
+      </a>
+      <!--
+        ★ href LINK: PROFILE → LOGIN (Logout) ★
+      -->
+      <a href="#login" class="btn-ghost danger nav-link" id="logoutBtn">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M8 10h8M14 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 4H5a1 1 0 00-1 1v10a1 1 0 001 1h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Logout</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="profile-main">
+    <nav class="breadcrumb">
+      <a href="#login" class="bc-link nav-link">Security Portal</a>
+      <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="bc-active">Student Profile</span>
+    </nav>
+
+    <div class="profile-grid">
+      <div class="profile-left">
+
+        <div class="card identity-card">
+          <div class="id-card-header">
+            <span class="card-eyebrow">Student Identity</span>
+            <span class="search-ts" id="searchTimestamp"></span>
+          </div>
+          <div class="id-card-body">
+            <div class="avatar-wrap">
+              <div class="avatar-inner" id="avatarDisplay"></div>
+              <div class="avatar-ring"></div>
+            </div>
+            <div>
+              <h1 class="student-name" id="studentName">—</h1>
+              <span class="matric-chip" id="studentMatric">—</span>
+              <div class="id-meta">
+                <div class="id-meta-row">
+                  <svg viewBox="0 0 16 16" fill="none" width="14"><path d="M2 13s1-3 6-3 6 3 6 3" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.2"/></svg>
+                  <span id="studentLevel">—</span>
+                </div>
+                <div class="id-meta-row">
+                  <svg viewBox="0 0 16 16" fill="none" width="14"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                  <span id="studentCourse">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Academic Profile</div>
+          <div class="detail-rows" id="academicRows"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Actions</div>
+          <!--
+            ★ href LINK: PROFILE → REPORT ★
+            This <a href="#report"> is the bridge from Page 2 to Page 3.
+            Clicking it shows the Incident Report page.
+          -->
+          <a href="#report" class="action-link nav-link">
+            <div class="action-icon">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M10 3v8M10 14v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 18a8 8 0 100-16 8 8 0 000 16z" stroke="currentColor" stroke-width="1.5"/></svg>
+            </div>
+            <div class="action-text">
+              <span class="action-title">Create Security Report</span>
+              <span class="action-sub">Log a new incident for this student</span>
+            </div>
+            <svg class="action-arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </a>
+        </div>
+
+      </div>
+      <div class="profile-right">
+
+        <div class="card threat-card" id="threatCard">
+          <div class="threat-header">
+            <span class="card-eyebrow">Security Assessment</span>
+            <div class="threat-badge" id="threatBadge">—</div>
+          </div>
+          <div class="threat-bar-track"><div class="threat-bar-fill" id="threatBarFill"></div></div>
+          <div class="threat-bar-labels"><span>Clear</span><span>Caution</span><span>High Risk</span></div>
+          <p class="threat-summary" id="threatSummary">—</p>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Security History</div>
+          <div class="history-list" id="historyList"></div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE 3 — INCIDENT REPORT
+     Connects to: Page 2 (Profile) via Back / Cancel
+     Connects to: Page 1 (Login) via breadcrumb Security Portal
+════════════════════════════════════════════════════════ -->
+<div id="page-report" class="page">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <!--
+        ★ href LINK: REPORT → PROFILE (Back button) ★
+      -->
+      <a href="#profile" class="btn-ghost nav-link">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M13 4L7 10l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Back to Profile</span>
+      </a>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-title">Incident Report</span>
+    </div>
+  </header>
+
+  <main class="report-main">
+    <nav class="breadcrumb">
+      <!--
+        ★ href LINKS in breadcrumb ★
+        Security Portal → Page 1 | Student Profile → Page 2
+      -->
+      <a href="#login" class="bc-link nav-link">Security Portal</a>
+      <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <a href="#profile" class="bc-link nav-link">Student Profile</a>
+      <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="bc-active">Incident Report</span>
+    </nav>
+
+    <div class="report-card">
+      <div class="report-header">
+        <div class="report-icon">
+          <svg viewBox="0 0 32 32" fill="none"><path d="M16 4v16M16 24v.5" stroke="white" stroke-width="2.5" stroke-linecap="round"/><path d="M16 28a12 12 0 100-24 12 12 0 000 24z" stroke="white" stroke-width="2"/></svg>
+        </div>
+        <div>
+          <h2 class="report-heading">Security Incident Report</h2>
+          <p class="report-sub">University of Abuja — Security Operations Unit</p>
+        </div>
+        <div class="student-badge">
+          <span class="badge-name" id="rHeaderName">—</span>
+          <span class="badge-matric" id="rHeaderMatric">—</span>
+        </div>
+      </div>
+
+      <div class="report-form">
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="form-label">Student Name</label>
+            <input type="text" id="rf_name" class="form-input readonly" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Matric Number</label>
+            <input type="text" id="rf_matric" class="form-input readonly" readonly />
+          </div>
+        </div>
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="form-label">Date of Incident</label>
+            <input type="date" id="rf_date" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Incident Type</label>
+            <select id="rf_type" class="form-input form-select">
+              <option value="">Select type…</option>
+              <option>Unauthorized Entry</option>
+              <option>Suspicious Behaviour</option>
+              <option>Physical Altercation</option>
+              <option>Possession of Restricted Item</option>
+              <option>Verbal Threat</option>
+              <option>Property Damage</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Threat Level</label>
+            <div class="threat-radio-group">
+              <label class="threat-radio"><input type="radio" name="rf_threat" value="green"/><span>🟢 Clear</span></label>
+              <label class="threat-radio"><input type="radio" name="rf_threat" value="yellow"/><span>🟡 Caution</span></label>
+              <label class="threat-radio"><input type="radio" name="rf_threat" value="red"/><span>🔴 High Risk</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Incident Description</label>
+            <textarea id="rf_desc" class="form-input form-textarea" rows="5" placeholder="Describe the incident in detail…"></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Reporting Officer Name</label>
+            <input type="text" id="rf_officer" class="form-input" placeholder="Full name of reporting officer" />
+          </div>
+        </div>
+
+        <div id="reportSuccess" class="report-success hidden">
+          <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M7 10l2.5 2.5L13 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Report submitted successfully. This is a demonstration — no data was sent to a server.
+        </div>
+
+        <div class="form-actions">
+          <!--
+            ★ href LINK: REPORT → PROFILE (Cancel) ★
+          -->
+          <a href="#profile" class="btn-cancel nav-link">Cancel</a>
+          <button class="btn-submit" id="submitBtn">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M3 10h14M10 4l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Submit Report
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     JAVASCRIPT — Student data, validation & page router
+════════════════════════════════════════════════════════ -->
+<script>
+/* ── Student database ── */
+var STUDENTS = [
+  { id:1,  name:"Fatima Uche Bello",        department:"Computer Science",     faculty:"Science",              course:"B.Sc. Computer Science",        level:"400 Level", matric:"20/52RA015/CSC", threat:"green",  threatSummary:"No known security concerns. Student has a clean record across all university checkpoints.",                                                                                                                                            history:[{date:"2024-01-10",event:"Routine gate check — cleared.",officer:"Sgt. Abubakar"}],                                                                                                                                                                                                                                                             avatarColor:"#1a6fc4", avatarInitials:"FUB" },
+  { id:2,  name:"Chukwuemeka Nnaji Obi",    department:"Law",                  faculty:"Law",                  course:"LL.B. Law",                     level:"500 Level", matric:"19/47GA082/LAW", threat:"yellow", threatSummary:"Student has been flagged for monitoring after an unauthorized-entry attempt in the Faculty of Law annex. Currently under observation.",                                                                                             history:[{date:"2023-11-05",event:"Attempted entry into restricted staff corridor in Law Faculty. Was turned away and cautioned.",officer:"Sgt. Garba"},{date:"2024-02-18",event:"Stopped at Main Gate past curfew. Claimed to be returning from library. Noted and logged.",officer:"Sgt. Abubakar"}],                                                    avatarColor:"#b45309", avatarInitials:"CNO" },
+  { id:3,  name:"Ngozi Adaeze Okonkwo",     department:"Biochemistry",         faculty:"Science",              course:"B.Sc. Biochemistry",            level:"300 Level", matric:"21/61TB033/BCH", threat:"green",  threatSummary:"No reported incidents. Student co-operates fully with security personnel at checkpoints.",                                                                                                                                          history:[{date:"2024-03-01",event:"Reported lost ID card. Replacement processed. No suspicious activity.",officer:"Sgt. Musa"}],                                                                                                                                                                                                                           avatarColor:"#0f766e", avatarInitials:"NAO" },
+  { id:4,  name:"Ibrahim Suleiman Kwaghe",  department:"Political Science",    faculty:"Social Sciences",      course:"B.Sc. Political Science",       level:"200 Level", matric:"23/71PQ044/PSC", threat:"red",    threatSummary:"HIGH RISK — Student is flagged following a physical altercation near Faculty of Social Sciences. Security personnel should exercise extra caution and contact a supervisor before granting access.",                               history:[{date:"2023-09-20",event:"Involved in physical altercation with another student at the Social Sciences car park. University disciplinary board notified.",officer:"Sgt. Garba"},{date:"2023-10-11",event:"Returned to campus while disciplinary process was ongoing. Entry denied at Main Gate per standing instruction.",officer:"Sgt. Abdullahi"},{date:"2024-01-08",event:"Readmitted after disciplinary hearing. Still flagged pending six-month review period.",officer:"Sgt. Abubakar"}], avatarColor:"#b91c1c", avatarInitials:"ISK" },
+  { id:5,  name:"Amaka Stella Eze",         department:"Mass Communication",   faculty:"Arts",                 course:"B.Sc. Mass Communication",     level:"300 Level", matric:"21/63VC057/MCS", threat:"green",  threatSummary:"No incidents recorded. Student is known to the gate team and routinely compliant.",                                                                                                                                               history:[{date:"2024-04-02",event:"Stopped for routine vehicle search at Faculty Gate 2 — nothing found. Cleared.",officer:"Sgt. Musa"}],                                                                                                                                                                                                                   avatarColor:"#7c3aed", avatarInitials:"ASE" },
+  { id:6,  name:"Yusuf Tanimu Lawan",       department:"Economics",            faculty:"Social Sciences",      course:"B.Sc. Economics",              level:"400 Level", matric:"20/55DM069/ECO", threat:"yellow", threatSummary:"Flagged for monitoring after being found in a restricted administrative block without authorization. No physical incident occurred but the behaviour was noted as suspicious.",                                                      history:[{date:"2023-12-14",event:"Found in Admin Block corridor — no ID, claimed wrong direction. Asked to leave, complied.",officer:"Sgt. Abdullahi"},{date:"2024-02-27",event:"Logged entering Faculty of Social Sciences after official closing hours. Warned.",officer:"Sgt. Garba"}],                                                                  avatarColor:"#b45309", avatarInitials:"YTL" },
+  { id:7,  name:"Chidinma Obiora Agu",      department:"Medicine & Surgery",   faculty:"Medicine",             course:"MBBS",                         level:"600 Level", matric:"18/31HN091/MED", threat:"green",  threatSummary:"No security incidents. Final-year medical student with exemplary gate compliance record.",                                                                                                                                          history:[{date:"2024-05-05",event:"Verified and cleared for after-hours access to Teaching Hospital block — pre-approved.",officer:"Sgt. Musa"}],                                                                                                                                                                                                           avatarColor:"#047857", avatarInitials:"COA" },
+  { id:8,  name:"Hauwa Salisu Danladi",     department:"Pharmacy",             faculty:"Pharmaceutical Sciences", course:"B.Pharm.",                  level:"500 Level", matric:"19/43WF102/PHA", threat:"green",  threatSummary:"Clean record. Student has a valid pre-authorized after-hours laboratory pass.",                                                                                                                                                   history:[{date:"2024-03-18",event:"Processed for extended lab access — paperwork verified and filed.",officer:"Sgt. Abdullahi"}],                                                                                                                                                                                                                           avatarColor:"#0369a1", avatarInitials:"HSD" },
+  { id:9,  name:"Emeka Prosper Chime",      department:"Electrical Engineering",faculty:"Engineering",         course:"B.Eng. Electrical Engineering",level:"400 Level", matric:"20/58KL113/EEE", threat:"red",    threatSummary:"HIGH RISK — Student was found in possession of a restricted item (unmarked electronic device) at the Engineering Faculty checkpoint. Case referred to university security command.",                                              history:[{date:"2023-08-30",event:"Flagged at Engineering Faculty Gate — carrying unmarked electronic assembly. Device confiscated. Formal report filed.",officer:"Sgt. Garba"},{date:"2023-11-22",event:"Re-entered campus without prior clearance from security command. Escort back to gate recorded.",officer:"Sgt. Abubakar"},{date:"2024-01-15",event:"Cleared for re-entry with conditional access — Engineering buildings only, daytime hours.",officer:"Sgt. Musa"}], avatarColor:"#b91c1c", avatarInitials:"EPC" },
+  { id:10, name:"Adaobi Kelechi Nwosu",     department:"Accounting",           faculty:"Administration",       course:"B.Sc. Accounting",             level:"200 Level", matric:"23/75BZ124/ACC", threat:"green",  threatSummary:"No known concerns. New student — cooperates at all checkpoints and presents valid ID without prompting.",                                                                                                                          history:[],                                                                                                                                                                                                                                                                                                                                                avatarColor:"#1a6fc4", avatarInitials:"AKN" }
+];
+
+var OFFICER_PASSWORD = "UASM2024";
+var currentStudent = null;
+
+/* ── Page router ──────────────────────────────────────
+   All <a> tags with class "nav-link" use hash hrefs
+   (#login, #profile, #report). This router intercepts
+   those clicks and switches the visible page accordingly.
+──────────────────────────────────────────────────────── */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('page-active'); });
+  var target = document.getElementById('page-' + id);
+  if(target){ target.classList.add('page-active'); }
+  window.scrollTo(0, 0);
+}
+
+/* Wire up all nav links */
+document.addEventListener('click', function(e) {
+  var link = e.target.closest('a.nav-link');
+  if(!link) return;
+  e.preventDefault();
+  var hash = (link.getAttribute('href') || '').replace('#','');
+
+  if(hash === 'login') {
+    currentStudent = null;
+    showPage('login');
+  } else if(hash === 'profile') {
+    if(!currentStudent) { showPage('login'); return; }
+    showPage('profile');
+  } else if(hash === 'report') {
+    if(!currentStudent) { showPage('login'); return; }
+    fillReportForm(currentStudent);
+    document.getElementById('reportSuccess').classList.add('hidden');
+    showPage('report');
+  }
+});
+
+/* ── Login button ─────────────────────────────────────
+   href="#profile" on the <a> button.
+   JS validates first; only navigates if valid.
+──────────────────────────────────────────────────────── */
+document.getElementById('loginBtn').addEventListener('click', function(e) {
+  e.preventDefault();
+  var matric   = document.getElementById('matricInput').value.trim().toUpperCase();
+  var password = document.getElementById('passwordInput').value;
+  var errEl    = document.getElementById('loginError');
+  var errMsg   = document.getElementById('loginErrorMsg');
+
+  function showErr(msg){
+    errMsg.textContent = msg;
+    errEl.classList.remove('hidden','shake');
+    void errEl.offsetWidth;
+    errEl.classList.add('shake');
+  }
+
+  errEl.classList.add('hidden');
+  if(!matric)   { showErr('Please enter a matric number.'); return; }
+  if(!password) { showErr('Please enter your officer password.'); return; }
+  if(password !== OFFICER_PASSWORD){ showErr('Incorrect officer password. Access denied.'); return; }
+
+  var found = null;
+  for(var i=0; i<STUDENTS.length; i++){
+    if(STUDENTS[i].matric.toUpperCase() === matric){ found = STUDENTS[i]; break; }
+  }
+  if(!found){ showErr('No student found with matric number "' + matric + '".'); return; }
+
+  /* Validation passed — now follow the href="#profile" */
+  currentStudent = found;
+  renderProfile(found);
+  showPage('profile');
+});
+
+/* Allow Enter key on login fields */
+['matricInput','passwordInput'].forEach(function(id){
+  document.getElementById(id).addEventListener('keydown', function(e){
+    if(e.key === 'Enter') document.getElementById('loginBtn').click();
+  });
+});
+
+/* Toggle password visibility */
+document.getElementById('togglePw').addEventListener('click', function(){
+  var inp = document.getElementById('passwordInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+/* ── Render Profile ───────────────────────────────── */
+function formatDate(iso){
+  if(!iso) return '—';
+  var d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function renderProfile(s) {
+  var av = document.getElementById('avatarDisplay');
+  av.style.background = 'linear-gradient(135deg,' + s.avatarColor + 'cc,' + s.avatarColor + ')';
+  av.textContent = s.avatarInitials;
+  document.getElementById('studentName').textContent   = s.name;
+  document.getElementById('studentMatric').textContent = s.matric;
+  document.getElementById('studentLevel').textContent  = s.level;
+  document.getElementById('studentCourse').textContent = s.course;
+  var n = new Date();
+  document.getElementById('searchTimestamp').textContent = 'Searched ' + n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' · ' + n.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+
+  document.getElementById('academicRows').innerHTML = [
+    {label:'Faculty',value:s.faculty},
+    {label:'Department',value:s.department},
+    {label:'Course',value:s.course},
+    {label:'Academic Level',value:s.level},
+    {label:'Matric Number',value:s.matric}
+  ].map(function(r){
+    return '<div class="detail-row"><span class="detail-label">'+r.label+'</span><span class="detail-value">'+r.value+'</span></div>';
+  }).join('');
+
+  var tc = {
+    green:  {label:'CLEAR',     cls:'badge-green',  w:'16%', color:'#22c55e'},
+    yellow: {label:'CAUTION',   cls:'badge-yellow', w:'55%', color:'#f59e0b'},
+    red:    {label:'HIGH RISK', cls:'badge-red',    w:'92%', color:'#ef4444'}
+  }[s.threat] || {label:'CLEAR',cls:'badge-green',w:'16%',color:'#22c55e'};
+
+  var badge = document.getElementById('threatBadge');
+  badge.textContent = tc.label;
+  badge.className   = 'threat-badge ' + tc.cls;
+  document.getElementById('threatCard').className = 'card threat-card threat-' + s.threat;
+  var fill = document.getElementById('threatBarFill');
+  fill.style.background = tc.color;
+  fill.style.width = '0%';
+  setTimeout(function(){ fill.style.width = tc.w; }, 80);
+  document.getElementById('threatSummary').textContent = s.threatSummary;
+
+  var histEl = document.getElementById('historyList');
+  if(!s.history || s.history.length === 0) {
+    histEl.innerHTML = '<p class="no-history">No security incidents on record.</p>';
+  } else {
+    histEl.innerHTML = s.history.slice().reverse().map(function(h){
+      return '<div class="history-item"><div class="history-date">'+formatDate(h.date)+'</div><div class="history-event">'+h.event+'</div><div class="history-officer">Logged by: '+h.officer+'</div></div>';
+    }).join('');
+  }
+}
+
+/* ── Fill Report form ─────────────────────────────── */
+function fillReportForm(s) {
+  document.getElementById('rHeaderName').textContent   = s.name;
+  document.getElementById('rHeaderMatric').textContent = s.matric;
+  document.getElementById('rf_name').value             = s.name;
+  document.getElementById('rf_matric').value           = s.matric;
+  document.getElementById('rf_date').value             = new Date().toISOString().split('T')[0];
+  document.getElementById('rf_type').value             = '';
+  document.getElementById('rf_desc').value             = '';
+  document.getElementById('rf_officer').value          = '';
+  document.querySelectorAll('input[name="rf_threat"]').forEach(function(r){ r.checked = false; });
+}
+
+/* ── Submit Report validation ─────────────────────── */
+document.getElementById('submitBtn').addEventListener('click', function(){
+  var type    = document.getElementById('rf_type').value;
+  var desc    = document.getElementById('rf_desc').value.trim();
+  var officer = document.getElementById('rf_officer').value.trim();
+  var threat  = document.querySelector('input[name="rf_threat"]:checked');
+  if(!type)    { alert('Please select an incident type.'); return; }
+  if(!threat)  { alert('Please select a threat level.'); return; }
+  if(!desc)    { alert('Please enter an incident description.'); return; }
+  if(!officer) { alert('Please enter the reporting officer name.'); return; }
+  var suc = document.getElementById('reportSuccess');
+  suc.classList.remove('hidden');
+  suc.scrollIntoView({behavior:'smooth',block:'center'});
+});
+</script>
+</body>
+</html>
